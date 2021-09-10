@@ -3,16 +3,16 @@ import requests
 _BASE_URL = 'http://{{ schema.host }}{{ schema.base_path }}'
 
 
-{% for path, path_details in schema.paths %}
-{% for method, method_details in path_details %}
-def {{ method_details.name }}({{ method_details.parameters|map(attribute='name')|join(', ') }}) -> requests.Response:
-    """{{ method_details.summary }}"""
+{% for path_name, path in schema.paths %}
+{% for method_name, method in path %}
+def {{ method.name }}({{ method.parameters|map(attribute='name')|join(', ') }}) -> requests.Response:
+    """{{ method.summary }}"""
     url = _BASE_URL + f'{{ path }}'
-    {% set params = method_details.parameters|map(attribute='in_')|select('equalto', 'query')|list %}
-    {% set body = method_details.parameters|map(attribute='in_')|select('equalto', 'body')|list %}
+    {% set params = method.parameters|map(attribute='in_')|select('equalto', 'query')|list %}
+    {% set body = method.parameters|map(attribute='in_')|select('equalto', 'body')|list %}
     {% if params %}
     params = {
-        {% for p in method_details.parameters %}
+        {% for p in method.parameters %}
         {% if p.in_ == 'query' %}
         '{{ p.name }}': {{ p.name }},
         {% endif %}
@@ -21,14 +21,14 @@ def {{ method_details.name }}({{ method_details.parameters|map(attribute='name')
     {% endif %}
     {% if body %}
     body = {
-        {% for p in method_details.parameters %}
+        {% for p in method.parameters %}
         {% if p.in_ == 'body' %}
         '{{ p.name }}': {{ p.name }},
         {% endif %}
         {% endfor %}
     }
     {% endif %}
-    return getattr(requests, '{{ method }}')(url{% if params %}, params=params{% endif %}{% if body %}, json=body{% endif %})
+    return getattr(requests, '{{ method_name }}')(url{% if params %}, params=params{% endif %}{% if body %}, json=body{% endif %})
 
 
 {% endfor %}
